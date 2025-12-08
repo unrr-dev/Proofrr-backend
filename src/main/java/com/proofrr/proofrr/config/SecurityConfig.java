@@ -36,28 +36,68 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+//    @Bean
+//    @Order(1)
+//    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
+//                                                      JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+//        http.csrf(AbstractHttpConfigurer::disable)
+//                .securityMatcher("/api/**")
+//                .cors(Customizer.withDefaults())
+//                .httpBasic(AbstractHttpConfigurer::disable)
+//                .formLogin(AbstractHttpConfigurer::disable)
+//                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+//                        .requestMatchers("/api/health").permitAll()
+//                        .requestMatchers("/api/auth/**").permitAll()
+//                        .requestMatchers("/api/calendar/oauth2/callback").permitAll()
+//                        .requestMatchers("/api/chat/projects/share/**").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/api/projects/share/**").permitAll()
+//                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
+//                        .anyRequest().authenticated())
+//                .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+//                .requestCache(AbstractHttpConfigurer::disable);
+//        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+//        return http.build();
+//    }
+
     @Bean
     @Order(1)
     public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http,
                                                       JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+        http
+                .csrf(AbstractHttpConfigurer::disable)
                 .securityMatcher("/api/**")
                 .cors(Customizer.withDefaults())
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
                 .authorizeHttpRequests(auth -> auth
+                        // Allow preflight requests BEFORE JWT
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+
                         .requestMatchers("/api/calendar/oauth2/callback").permitAll()
                         .requestMatchers("/api/chat/projects/share/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects/share/**").permitAll()
+
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
-                        .anyRequest().authenticated())
-                .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+
+                        .anyRequest().authenticated()
+                )
+
+                .exceptionHandling(ex ->
+                        ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                )
+
                 .requestCache(AbstractHttpConfigurer::disable);
-        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // JWT filter should come AFTER CORS
+        http.addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
