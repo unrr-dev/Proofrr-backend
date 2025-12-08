@@ -27,8 +27,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -138,7 +136,9 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         List<String> origins = Arrays.stream(frontendUrl.split(","))
-                .map(url -> url.replaceAll("/+$", "")) // remove trailing slashes
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(this::trimTrailingSlash) // remove trailing slashes
                 .toList();
 
         config.setAllowedOriginPatterns(origins);
