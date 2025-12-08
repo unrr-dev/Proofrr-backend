@@ -131,7 +131,7 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
-            @Value("${app.frontend-url:http://localhost:5173}") String frontendUrl) {
+            @Value("${app.frontend-url:https://proofrr-ui-sumits-projects-87f3bb9c.vercel.app}") String frontendUrl) {
 
         CorsConfiguration config = new CorsConfiguration();
 
@@ -141,7 +141,7 @@ public class SecurityConfig {
                 .map(this::trimTrailingSlash) // remove trailing slashes
                 .toList();
 
-        config.setAllowedOriginPatterns(origins);
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
