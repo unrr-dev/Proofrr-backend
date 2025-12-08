@@ -25,6 +25,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import org.springframework.http.HttpStatus;
 import java.util.Arrays;
@@ -131,26 +132,18 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
-            @Value("${app.frontend-url:https://proofrr-ui-sumits-projects-87f3bb9c.vercel.app}") String frontendUrl) {
-
-        CorsConfiguration config = new CorsConfiguration();
-
-        List<String> origins = Arrays.stream(frontendUrl.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .map(this::trimTrailingSlash) // remove trailing slashes
-                .toList();
-
-        config.setAllowedOrigins(origins);
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
-        config.setExposedHeaders(List.of("Set-Cookie"));
-
+            @Value("${app.frontend-url:http://localhost:5173,https://proofrr-ui-sumits-projects-87f3bb9c.vercel.app}") String frontendUrl) {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
+        source.registerCorsConfiguration("/**", buildCorsConfiguration(frontendUrl));
         return source;
+    }
+
+    @Bean
+    public CorsFilter corsFilter(
+            @Value("${app.frontend-url:http://localhost:5173,https://proofrr-ui-sumits-projects-87f3bb9c.vercel.app}") String frontendUrl) {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", buildCorsConfiguration(frontendUrl));
+        return new CorsFilter(source);
     }
 
 
@@ -171,5 +164,23 @@ public class SecurityConfig {
             return url.substring(0, url.length() - 1);
         }
         return url;
+    }
+
+    private CorsConfiguration buildCorsConfiguration(String frontendUrl) {
+        CorsConfiguration config = new CorsConfiguration();
+
+        List<String> origins = Arrays.stream(frontendUrl.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(this::trimTrailingSlash)
+                .toList();
+
+        // Use patterns so allowCredentials can coexist with dynamic origin echoing
+        config.setAllowedOriginPatterns(origins.isEmpty() ? List.of("*") : origins);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+        config.setExposedHeaders(List.of("Set-Cookie"));
+        return config;
     }
 }
